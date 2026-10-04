@@ -1,0 +1,421 @@
+@import "tailwindcss";
+
+/* Hiệu ứng hover chỉ bật trên thiết bị có chuột – mobile luôn thấy ảnh rõ */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
+@theme {
+  /* Nền sáng – chữ đạt tương phản WCAG AA (≥ 4.5:1) trên paper và surface */
+  --color-paper: #fbf8f3;
+  --color-surface: #f2ece3;
+  --color-line: rgb(31 28 25 / 0.12);
+  --color-ink: #1f1c19;
+  --color-muted: #6f675e;
+  --color-gold: #876a34;
+
+  --color-card: #ffffff;
+  --shadow-soft: 0 28px 60px -34px rgb(31 28 25 / 0.32);
+
+  /* Chỉ dùng cho chữ/lớp phủ nằm trên ảnh */
+  --color-ivory: #f7f3ec;
+  --color-gold-soft: #dcc08a;
+  --color-shade: #14110f;
+
+  --font-display: var(--font-cormorant),
+  "Times New Roman",
+  serif;
+  --font-sans: var(--font-be-vietnam),
+  "Helvetica Neue",
+  Arial,
+  sans-serif;
+
+  --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility caps-display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  line-height: 1.15;
+}
+
+@utility label {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+/* Nút bo tròn màu đậm – CTA chính */
+@utility btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 9999px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: 0.95rem 1.6rem;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background: var(--color-gold);
+  }
+}
+
+@utility field-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  background: transparent;
+  padding: 0.75rem 0;
+  font-size: 1rem;
+  color: inherit;
+  outline: none;
+  transition: border-color 0.3s;
+
+  &:focus {
+    border-color: var(--color-gold);
+  }
+}
+
+html {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 300;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-paper);
+}
+
+select option {
+  background: var(--color-paper);
+}
+
+/* ---------- Intro: logo fade-in rồi màn che mờ dần ---------- */
+@keyframes intro-logo {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes intro-line {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.intro-overlay {
+  animation: intro-out 1s var(--ease-lux) 2.6s forwards;
+}
+
+.intro-logo {
+  animation: intro-logo 1.5s var(--ease-lux) 0.3s both;
+}
+
+.intro-line {
+  animation: intro-line 1.2s var(--ease-lux) 1s both;
+  transform-origin: center;
+}
+
+/* Intro + trang chủ phía sau chỉ bắt đầu chạy khi logo đã tải xong (IntroOverlay thêm .is-ready).
+   Tránh trường hợp máy/mạng chậm: đồng hồ animation chạy trước khi logo kịp hiện. */
+.intro-overlay:not(.is-ready),
+.intro-overlay:not(.is-ready) *,
+.intro-overlay:not(.is-ready)~* * {
+  animation-play-state: paused;
+}
+
+/* ---------- Panel reveal: trượt lên + hiện dần, so le ----------
+   Chỉ dùng transform/opacity (GPU) – tránh clip-path/filter trên ảnh lớn gây giật. */
+@keyframes panel-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.panel-reveal {
+  animation: panel-reveal 1.1s var(--ease-lux) var(--delay, 0s) both;
+}
+
+.fade-up {
+  animation: fade-up 0.9s var(--ease-lux) var(--delay, 0s) both;
+}
+
+/* ---------- Khối hạng mục trang chủ: làm tối khối không được rê (chỉ opacity) ---------- */
+.panel-dim {
+  opacity: 0.05;
+  transition: opacity 0.7s var(--ease-lux);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel-nav:hover>.panel:not(:hover) .panel-dim {
+    opacity: 0.4;
+  }
+
+  .panel:hover .panel-dim {
+    opacity: 0;
+  }
+}
+
+.panel:focus-visible .panel-dim {
+  opacity: 0;
+}
+
+/* ---------- View Transitions (chuyển trang, lightbox) ---------- */
+:root {
+  --duration-exit: 180ms;
+  --duration-enter: 280ms;
+  --duration-move: 480ms;
+  /* trang mới bắt đầu hiện khi trang cũ mờ được một nửa → không có khoảng trống */
+  --enter-delay: calc(var(--duration-exit) / 2);
+}
+
+@keyframes fade {
+  from {
+    filter: blur(3px);
+    opacity: 0;
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide {
+  from {
+    translate: var(--slide-offset);
+  }
+
+  to {
+    translate: 0;
+  }
+}
+
+@keyframes scale-down {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes via-blur {
+  30% {
+    filter: blur(3px);
+  }
+}
+
+/* Chuyển trang ngang hàng (giữa các hạng mục) */
+::view-transition-old(.fade-out) {
+  animation: var(--duration-exit) ease-in fade reverse;
+}
+
+::view-transition-new(.fade-in) {
+  animation: var(--duration-enter) ease-out var(--enter-delay) both fade;
+}
+
+/* Đi sâu vào (trang chủ → hạng mục → album) / quay lại */
+::view-transition-old(.nav-forward) {
+  --slide-offset: -60px;
+  animation:
+    var(--duration-exit) ease-in both fade reverse,
+    var(--duration-move) var(--ease-lux) both slide reverse;
+}
+
+::view-transition-new(.nav-forward) {
+  --slide-offset: 60px;
+  animation:
+    var(--duration-enter) ease-out var(--enter-delay) both fade,
+    var(--duration-move) var(--ease-lux) both slide;
+}
+
+::view-transition-old(.nav-back) {
+  --slide-offset: 60px;
+  animation:
+    var(--duration-exit) ease-in both fade reverse,
+    var(--duration-move) var(--ease-lux) both slide reverse;
+}
+
+::view-transition-new(.nav-back) {
+  --slide-offset: -60px;
+  animation:
+    var(--duration-enter) ease-out var(--enter-delay) both fade,
+    var(--duration-move) var(--ease-lux) both slide;
+}
+
+/* Lightbox: ảnh sau trượt từ phải, ảnh trước trượt từ trái */
+::view-transition-new(.slide-from-right),
+::view-transition-new(.slide-from-left) {
+  animation:
+    var(--duration-enter) ease-out both fade,
+    var(--duration-move) var(--ease-lux) both slide;
+}
+
+::view-transition-new(.slide-from-right) {
+  --slide-offset: 80px;
+}
+
+::view-transition-new(.slide-from-left) {
+  --slide-offset: -80px;
+}
+
+::view-transition-old(.slide-to-left),
+::view-transition-old(.slide-to-right) {
+  animation:
+    var(--duration-enter) ease-in both fade reverse,
+    var(--duration-move) var(--ease-lux) both slide reverse;
+}
+
+::view-transition-old(.slide-to-left) {
+  --slide-offset: -80px;
+}
+
+::view-transition-old(.slide-to-right) {
+  --slide-offset: 80px;
+}
+
+/* Mở / đóng lightbox */
+::view-transition-old(.scale-out) {
+  animation: var(--duration-exit) ease-in both scale-down;
+}
+
+::view-transition-new(.scale-in) {
+  animation: var(--duration-enter) ease-out both scale-up;
+}
+
+/* Ảnh khối trang chủ → ảnh lớn đầu trang hạng mục */
+::view-transition-group(.morph) {
+  animation-duration: var(--duration-move);
+  animation-timing-function: var(--ease-lux);
+}
+
+::view-transition-image-pair(.morph) {
+  animation-name: via-blur;
+}
+
+/* Tên album trên thẻ → tiêu đề trang album (không phóng to ảnh chụp chữ) */
+::view-transition-group(.text-morph) {
+  animation-duration: var(--duration-move);
+  animation-timing-function: var(--ease-lux);
+}
+
+::view-transition-old(.text-morph) {
+  display: none;
+}
+
+::view-transition-new(.text-morph) {
+  animation: none;
+  object-fit: none;
+  object-position: left top;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+
+  /* Vẫn giữ intro (chỉ mờ dần, không trượt/nhoè) – nếu không, máy tắt hiệu ứng sẽ thấy intro biến mất ngay */
+  .intro-logo {
+    animation: intro-fade 0.8s ease-out both !important;
+  }
+
+  .intro-line {
+    animation: none !important;
+  }
+
+  .intro-overlay {
+    animation: intro-out 0.6s ease-in 1.6s forwards !important;
+  }
+}

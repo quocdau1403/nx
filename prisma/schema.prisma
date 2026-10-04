@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  /// VIEWER | ADMIN
+  role         String   @default("VIEWER")
+  createdAt    DateTime @default(now())
+}
+
+model Album {
+  id           String   @id @default(cuid())
+  /// slug trong lib/categories.ts: anh-cuoi | make-up | concept
+  category     String
+  slug         String
+  title        String
+  description  String?
+  coverPhotoId String?
+  /// upload | facebook | import
+  source       String   @default("upload")
+  /// "fb:<album id>" (Facebook) hoặc "import:<hạng mục>:<tên>" (npm run import) – dùng để không tạo trùng
+  externalId   String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  photos       Photo[]
+
+  @@unique([category, slug])
+  @@index([category, createdAt])
+}
+
+model Photo {
+  /// UUID, cũng là tên thư mục chứa các bản resize trong STORAGE_DIR
+  id          String   @id
+  albumId     String
+  album       Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  position    Int
+  width       Int
+  height      Int
+  blurDataUrl String
+  externalId  String?  @unique
+  createdAt   DateTime @default(now())
+
+  @@index([albumId, position])
+}
