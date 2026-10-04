@@ -2,13 +2,15 @@
 
 Portfolio/gallery cho studio: Ảnh cưới · Make up · Ảnh concept.
 
-**Stack:** Next.js 15 (App Router) · React 19 · Tailwind CSS 4 · Prisma + SQLite · sharp · jose (JWT cookie) · dnd-kit
+**Stack:** Next.js 15 (App Router) · React 19 · Tailwind CSS 4 · Prisma + PostgreSQL (Neon) · Vercel Blob · sharp · jose (JWT cookie) · dnd-kit
+
+Deploy lên Vercel: xem [docs/deployment.md §9](docs/deployment.md#9-deploy-lên-vercel-lựa-chọn-c--code-hiện-tại-đã-hỗ-trợ).
 
 ## Cài đặt
 
 ```bash
 npm install
-cp .env.example .env      # điền AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+cp .env.example .env      # điền DATABASE_URL(+_UNPOOLED), BLOB_READ_WRITE_TOKEN, AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
 npm run setup             # tạo database + tài khoản admin
 npm run dev               # http://localhost:3000
 ```
@@ -24,7 +26,7 @@ Yêu cầu Node.js ≥ 20.9. Chuyển dự án sang máy khác, chạy cho máy 
 | Người xem (không cần tài khoản) | Xem toàn bộ danh mục, album, ảnh |
 | Admin (`npm run db:seed`, đăng nhập tại `/admin`) | Tạo/sửa/xoá album theo từng hạng mục, bulk upload, kéo thả sắp xếp, đặt cover, xoá ảnh, đồng bộ Facebook |
 
-Ảnh gốc được tối ưu thành WebP 480/960/1600/2400px trong `STORAGE_DIR` và phục vụ qua `/api/photos/...`.
+Ảnh gốc được tối ưu thành WebP 480/960/1600/2400px và lưu trên Vercel Blob (`photos/<id>/<w>.webp`), phục vụ thẳng qua CDN.
 
 ## Nhập ảnh từ thư mục
 

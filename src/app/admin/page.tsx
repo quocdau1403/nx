@@ -11,6 +11,10 @@ import { facebookToken } from "@/lib/facebook";
 
 export const metadata = { title: "Quản trị" };
 
+// Đồng bộ Facebook (server action gọi từ trang này) có thể chạy lâu trên Vercel.
+// Nếu hết thời gian, bấm đồng bộ lại – ảnh đã nhập sẽ được bỏ qua.
+export const maxDuration = 300;
+
 export default async function AdminPage() {
   const session = await requireAdmin();
   const albums = await listAlbums();

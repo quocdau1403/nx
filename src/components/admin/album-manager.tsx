@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { upload as uploadToBlob } from "@vercel/blob/client";
 import { deletePhoto, reorderPhotos, setCover } from "@/app/actions/admin";
 import { PhotoImg } from "@/components/gallery/photo-img";
 import type { PhotoView } from "@/lib/photo-urls";
@@ -139,7 +140,8 @@ function Uploader({ albumId, onUploaded }: { albumId: string; onUploaded: (photo
   const inputRef = useRef<HTMLInputElement>(null);
   const uploading = progress !== null && progress.done < progress.total;
 
-  // Tải tuần tự từng ảnh để hiển thị tiến độ và tránh request quá lớn.
+  // Tải tuần tự từng ảnh để hiển thị tiến độ. Ảnh gốc đi thẳng từ trình duyệt lên Vercel Blob
+  // (không bị giới hạn 4.5 MB/request của Vercel), sau đó server tải về để tối ưu.
   async function upload(files: File[]) {
     const images = files.filter((f) => f.type.startsWith("image/"));
     if (!images.length || uploading) return;
@@ -148,16 +150,25 @@ function Uploader({ albumId, onUploaded }: { albumId: string; onUploaded: (photo
     setProgress({ done: 0, total: images.length, errors });
 
     for (const [i, file] of images.entries()) {
-      const body = new FormData();
-      body.append("files", file);
       try {
-        const res = await fetch(`/api/admin/albums/${albumId}/photos`, { method: "POST", body });
+        if (file.size > 40 * 1024 * 1024) throw new Error("vượt quá 40MB");
+        const blob = await uploadToBlob(`uploads/${albumId}/${file.name}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/uploads",
+          contentType: file.type,
+          multipart: file.size > 8 * 1024 * 1024,
+        });
+        const res = await fetch(`/api/admin/albums/${albumId}/photos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: blob.url, name: file.name }),
+        });
         const json: { photos?: PhotoView[]; errors?: string[]; error?: string } = await res.json();
         json.photos?.forEach(onUploaded);
         if (json.errors?.length) errors.push(...json.errors);
         else if (!res.ok) errors.push(`${file.name}: ${json.error ?? "lỗi máy chủ"}`);
-      } catch {
-        errors.push(`${file.name}: mất kết nối`);
+      } catch (error) {
+        errors.push(`${file.name}: ${error instanceof Error && error.message ? error.message : "mất kết nối"}`);
       }
       setProgress({ done: i + 1, total: images.length, errors: [...errors] });
     }

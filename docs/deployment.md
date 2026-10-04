@@ -271,12 +271,23 @@ Thêm dòng (chạy lúc 3h sáng mỗi ngày, giữ 14 ngày gần nhất):
 
 ---
 
-## 9. Nếu sau này muốn dùng Vercel (lựa chọn C)
+## 9. Deploy lên Vercel (lựa chọn C – code hiện tại đã hỗ trợ)
 
-Cần thay đổi code trước khi deploy:
+> [!NOTE]
+> Code hiện dùng **PostgreSQL (Neon)** + **Vercel Blob**. Các mục VPS/SQLite ở trên áp dụng cho phiên bản cũ.
 
-1. `prisma/schema.prisma`: `provider = "postgresql"`, `DATABASE_URL` trỏ tới PostgreSQL (Neon, Supabase, Vercel Postgres…); chuyển dữ liệu từ `dev.db` sang.
-2. `src/lib/photos.ts` + `src/app/api/photos/[id]/[size]/route.ts`: ghi/đọc ảnh từ object storage (Cloudinary, S3, Cloudflare R2…) thay vì thư mục `storage/`; tải lên các ảnh hiện có.
-3. Kiểm tra giới hạn kích thước request upload của gói Vercel đang dùng; nếu nhỏ hơn 40 MB, đổi sang upload trực tiếp từ trình duyệt lên object storage (signed URL).
+1. Vercel → Project → **Storage** → **Create Database** → **Neon** → Connect vào project (tự thêm `DATABASE_URL`, `DATABASE_URL_UNPOOLED`).
+2. **Storage** → **Create** → **Blob** → Connect vào project (tự thêm `BLOB_READ_WRITE_TOKEN`).
+3. **Settings → Environment Variables**: thêm `AUTH_SECRET` (≥ 32 ký tự), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, các `FB_TOKEN_*` (nếu dùng).
+4. Trên máy: copy các biến ở bước 1–2 vào `.env` (hoặc `npx vercel env pull .env`, nhớ giữ `AUTH_SECRET`/`ADMIN_*`), rồi:
+   ```bash
+   npm install
+   npm run db:push           # tạo bảng trên Neon
+   npm run migrate:vercel    # chuyển album/ảnh/tài khoản từ prisma/dev.db + storage/ (chạy lại an toàn)
+   npm run db:seed           # (tuỳ chọn) đặt lại tài khoản admin theo .env
+   ```
+5. Vercel → **Deployments** → **Redeploy** (để build nhận `BLOB_READ_WRITE_TOKEN` – URL ảnh được nhúng lúc build).
 
-Đây là thay đổi kiến trúc – cần làm và kiểm thử riêng, không nằm trong phạm vi hiện tại.
+Ghi chú:
+- Ảnh gốc được tải thẳng từ trình duyệt lên Blob (`uploads/`), server tối ưu thành WebP ở `photos/<id>/<w>.webp` rồi xoá bản gốc – không bị giới hạn 4.5 MB/request của Vercel.
+- Đồng bộ Facebook chạy tối đa 300 giây/lần; nếu dừng giữa chừng, bấm lại để tiếp tục.
